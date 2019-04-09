@@ -1,0 +1,27 @@
+Idea No.1 : 
+* Destroy enemy's units faster, but keep the base with workers
+
+Idea No.2 : 
+* Implement a tactic with regular fighters (light, heavy, ranged - mostly ranged) to keep killing enemy units from afar
+
+Goals: 
+* Harvest resources;
+* Build a barracks (maybe 2 on the side of the base)
+* Train troops (mostly ranged?)
+* 
+
+
+Notes:
+* https://github.com/santiontanon/microrts/wiki/Code-Guide
+* Game State - Action assignments
+* https://pypi.org/project/python-microRTS/		https://github.com/Bam4d/python-microRTS
+* Get valid action positions ? 
+* Resource management
+* Get_action should be a list of actions that unit should do (contains ID, unit_action, type, parameter ??)
+
+
+Units:
+* Worker - 1 hp, 1 damage
+* Light - 2hp, 1 damage?
+* Heavy - 4hp, 2 damage?
+* Ranged - 1hp, 1 damage?

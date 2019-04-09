@@ -57,7 +57,7 @@ public class MyBot extends AbstractionLayerAI {
     public PlayerAction getAction(int player, GameState gs) {
         PhysicalGameState pgs = gs.getPhysicalGameState();
         
-        // Harvest worker b ehaviour
+        // Harvest worker behaviour
         for (Unit unit : pgs.getUnits()) {
             // TODO: issue commands to units
         	if(unit.getPlayer() == player && unit.getType().canHarvest)
@@ -68,6 +68,25 @@ public class MyBot extends AbstractionLayerAI {
         }
         
         return translateActions(player, gs);
+    }
+    
+    public Unit GetClosestEnemy(PhysicalGameState pgs, Player p, Unit u)
+    {
+    	Unit closestEnemy = null;
+    	int closestDistance = 0;
+    	for(Unit u2:pgs.getUnits())
+    	{
+    		if(u2.getPlayer() >= 0 && u2.getPlayer() != p.getID())
+    		{
+    			int distance = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
+    			if(closestEnemy == null || distance < closestDistance)
+    			{
+    				closestEnemy = u2;
+    				closestDistance = distance;
+    			}
+    		}
+    	}
+    	return closestEnemy;
     }
     
     @Override
