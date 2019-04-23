@@ -144,15 +144,90 @@ public class MyBot extends AbstractionLayerAI {
     	}
     }
     
-    // Barracks behavior (TO:DO - make a proper behavior for this)
+    // Barracks behavior
     public void BarracksBehavior(Unit u, Player p, PhysicalGameState pgs)
     {
-    	if (p.getResources() >= archer.cost)
+    	int enemyWorkerCount = EnemyUnitCount(p, pgs, worker, archer);
+    	if(enemyWorkerCount >= 3)
     	{
-    		train(u, archer);
+    		if (p.getResources() >= archer.cost)
+        	{
+        		train(u, archer);
+        	}
+    	}
+    	
+    	int enemyHeavyCount = EnemyUnitCount(p, pgs, heavy, archer);
+    	if(enemyHeavyCount >= 1)
+    	{
+    		if (p.getResources() >= archer.cost)
+	    	{
+	    		train(u, archer);
+	    	}
+    	}
+    	
+    	int enemyArcherCount = EnemyUnitCount(p, pgs, archer, light);
+    	if(enemyArcherCount >= 2)
+    	{
+    		if (p.getResources() >= light.cost)
+	    	{
+	    		train(u, light);
+	    	}
+    	}
+    	
+    	int enemyLightCount = EnemyUnitCount(p, pgs, light, heavy);
+    	if(enemyLightCount >= 2)
+    	{
+    		if (p.getResources() >= heavy.cost)
+	    	{
+	    		train(u, heavy);
+	    	}
     	}
     }
     
+    public int EnemyUnitCount(Player p, PhysicalGameState pgs, UnitType enemy, UnitType ally)
+    {
+    	int myUnitCount = 0;
+    	int enemyUnitCount = 0;
+    	
+    	for(Unit u2 : pgs.getUnits())
+    	{
+    		if(u2.getPlayer() == p.getID() && u2.getType() == ally)
+    		{
+    			myUnitCount++; 
+    		}
+    		
+    		if(u2.getPlayer() != p.getID() && u2.getType() == enemy)
+    		{
+    			enemyUnitCount++;
+    		}
+    	}
+    	
+    	// ally - archer
+    	if(myUnitCount > 0 && enemy == worker)
+    	{
+    		enemyUnitCount = enemyUnitCount - (myUnitCount * 3);
+    	}
+    	
+    	// ally - heavy
+    	if(myUnitCount > 0 && enemy == light)
+    	{
+    		enemyUnitCount = enemyUnitCount - (myUnitCount * 2);
+    	}
+    	
+    	// ally - archer
+    	if(myUnitCount > 0 && enemy == heavy)
+    	{
+    		enemyUnitCount = enemyUnitCount - (myUnitCount * 1);
+    	}
+    	
+    	// ally - light
+    	if(myUnitCount > 0 && enemy == archer)
+    	{
+    		enemyUnitCount = enemyUnitCount - (myUnitCount * 2);
+    	}
+    	
+    	return enemyUnitCount;
+    }
     
     // Melee unit behavior
     public void MeleeBehavior(Unit u, Player p, GameState gs)
@@ -308,18 +383,18 @@ public class MyBot extends AbstractionLayerAI {
         }
         
         // Command workers to attack if the enemy is close to them (Hopefully)
-        //for (Unit u : workers)
-        //{
-        //	Unit closestEnemy = GetClosestEnemy(pgs, p ,u);
-        //	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
-        //	if (u.getHarvestAmount() == 0)
-        //	{
-        //		if (distance < 5)
-        //		{
-        //			attack(u, closestEnemy);
-        //		}
-        //	}
-        //}
+        for (Unit u : workers)
+        {
+        	Unit closestEnemy = GetClosestEnemy(pgs, p ,u);
+        	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
+        	if (u.getHarvestAmount() == 0)
+        	{
+        		if (distance < 5)
+        		{
+        			attack(u, closestEnemy);
+        		}
+        	}
+        }
     }
     
     @Override
