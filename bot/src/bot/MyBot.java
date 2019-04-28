@@ -362,13 +362,16 @@ public class MyBot extends AbstractionLayerAI {
     		}
     	}
     	
-    	if(myBase.getX() < pgs.getWidth() / 2)
+    	if(myBase != null)
     	{
-    		isOnTop = true;
-    	}
-    	else
-    	{
-    		isOnTop = false;
+	    	if(myBase.getX() < pgs.getWidth() / 2)
+	    	{
+	    		isOnTop = true;
+	    	}
+	    	else
+	    	{
+	    		isOnTop = false;
+	    	}
     	}
     	
     	List<Integer> reservedPositions = new LinkedList<Integer>();
