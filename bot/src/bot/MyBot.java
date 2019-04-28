@@ -30,12 +30,13 @@ public class MyBot extends AbstractionLayerAI {
     private UnitType heavy;
     private UnitType barracks;
     private UnitType base;
+    private boolean isOnTop;
     
     public MyBot(UnitTypeTable utt) {
         super(new AStarPathFinding());
         this.utt = utt;
         worker = utt.getUnitType("Worker");
-        archer = utt.getUnitType("Archer");
+        archer = utt.getUnitType("Ranged");
         light = utt.getUnitType("Light");
         heavy = utt.getUnitType("Heavy");
         barracks = utt.getUnitType("Barracks");
@@ -44,7 +45,8 @@ public class MyBot extends AbstractionLayerAI {
     
 
     @Override
-    public void reset() {
+    public void reset() 
+    {
     }
 
     
@@ -69,7 +71,10 @@ public class MyBot extends AbstractionLayerAI {
         	{
         		BaseBehavior(unit, p, pgs);
         	}
+        }
         	
+        for (Unit unit : pgs.getUnits()) 
+        {
         	// Barracks
         	if(unit.getType() == barracks 
         			&& unit.getPlayer() == player 
@@ -77,7 +82,10 @@ public class MyBot extends AbstractionLayerAI {
         	{
         		BarracksBehavior(unit, p, pgs);
         	}
+        }
         	
+        for (Unit unit : pgs.getUnits()) 
+        {
         	// Melee
         	if(unit.getType() == light || unit.getType() == heavy 
         			&& unit.getPlayer() == player 
@@ -85,7 +93,10 @@ public class MyBot extends AbstractionLayerAI {
         	{
         		MeleeBehavior(unit, p, gs);
         	}
+        }
         	
+        for (Unit unit : pgs.getUnits()) 
+        {
         	// Ranged
         	if(unit.getType() == archer 
         			&& unit.getPlayer() == player 
@@ -93,7 +104,10 @@ public class MyBot extends AbstractionLayerAI {
         	{
         		RangedBehavior(unit, p, gs);
         	}
+        }
         	
+        for (Unit unit : pgs.getUnits()) 
+        {
         	// Workers
         	if(unit.getPlayer() == player && unit.getType().canHarvest)
         	{
@@ -129,6 +143,9 @@ public class MyBot extends AbstractionLayerAI {
     public void BaseBehavior(Unit u, Player p, PhysicalGameState pgs)
     {
     	int nWorkers = 0;
+    	int workerCount = 3;
+    	int multiplier = mapMultiplier(pgs);
+    	
     	for(Unit u2 : pgs.getUnits())
     	{
     		if(u2.getType() == worker && u2.getPlayer() == p.getID())
@@ -137,8 +154,13 @@ public class MyBot extends AbstractionLayerAI {
     		}
     	}
     	
+    	if (multiplier > 0)
+    	{
+    		workerCount = workerCount + (2 * multiplier);
+    	}
+    	
     	// Train up to 3 workers
-    	if(nWorkers < 3 && p.getResources() >= worker.cost)
+    	if(nWorkers < workerCount && p.getResources() >= worker.cost)
     	{
     		train(u, worker);
     	}
@@ -293,52 +315,113 @@ public class MyBot extends AbstractionLayerAI {
     {
     	int nBases = 0;
     	int nBarracks = 0;
+    	Unit myBase = null;
     	
     	int resourcesUsed = 0;
+    	int resourceCount = 0;
+    	int basesToBuild = 1;
+    	int barracksToBuild = 1;
     	
-    	List<Unit> freeWorkers = new LinkedList<Unit>();
-    	freeWorkers.addAll(workers);
+    	int multiplier = mapMultiplier(pgs);
+
+    	List<Unit> allWorkers = new LinkedList<Unit>();
+    	allWorkers.addAll(workers);
     	
     	if (workers.isEmpty())
     	{
     		return;
     	}
     	
-    	for (Unit u1 : pgs.getUnits())
+    //	List<Unit> harvesters = new LinkedList<Unit>();
+    //	for (Unit u2 : pgs.getUnits())
+    //	{
+    //		if(u2.getPlayer() == -1)
+    //		{
+    //			resourceCount++;
+    //		}
+    //	}
+    //	resourceCount = Math.round(resourceCount / 2);
+    	
+    	//if(harvesters.size() < 2)
+    	//{
+    	//	harvesters.add(allWorkers.get(0));
+    	//	allWorkers.remove(0);
+    	//}
+    	
+    	for (Unit u2 : pgs.getUnits())
     	{    		
-    		if(u1.getType() == base && u1.getPlayer() == p.getID())
+    		if(u2.getType() == base && u2.getPlayer() == p.getID())
     		{
     			nBases++;
+    			myBase = u2;
     		}
     		
-    		if(u1.getType() == barracks && u1.getPlayer() == p.getID())
+    		if(u2.getType() == barracks && u2.getPlayer() == p.getID())
     		{
     			nBarracks++;
     		}
     	}
     	
+    	if(myBase.getX() < pgs.getWidth() / 2)
+    	{
+    		isOnTop = true;
+    	}
+    	else
+    	{
+    		isOnTop = false;
+    	}
+    	
     	List<Integer> reservedPositions = new LinkedList<Integer>();
-    	if (nBases == 0 && !freeWorkers.isEmpty())
+    	if (nBases < basesToBuild && !allWorkers.isEmpty())
     	{
     		if(p.getResources() >= base.cost + resourcesUsed)
     		{
-    			Unit u = freeWorkers.remove(0);
+    			Unit u = allWorkers.remove(0);
     			buildIfNotAlreadyBuilding(u, base, u.getX(), u.getY(), reservedPositions, p, pgs);
     			resourcesUsed += base.cost;
     		}	
     	}
-    	if (nBarracks == 0 && !freeWorkers.isEmpty())
+    	if (nBarracks < (barracksToBuild * multiplier) && !allWorkers.isEmpty())
     	{
     		if(p.getResources() >= barracks.cost + resourcesUsed)
     		{
-    			Unit u = freeWorkers.remove(0);
-    			buildIfNotAlreadyBuilding(u, base, u.getX(), u.getY(), reservedPositions, p, pgs);
+    			Unit u = allWorkers.remove(0);
+    			if(isOnTop)
+        		{
+    				if(nBarracks == 0)
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 3, myBase.getY() + 1, reservedPositions, p, pgs);
+    				}
+    				else if (nBarracks == 1)
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 1, myBase.getY() + 3, reservedPositions, p, pgs);
+    				}
+    				else
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 3, myBase.getY() + 3, reservedPositions, p, pgs);
+    				}
+        		}
+    			else
+    			{
+    				if(nBarracks == 0)
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 2, myBase.getY(), reservedPositions, p, pgs);
+    				}
+    				else if (nBarracks == 1)
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX(), myBase.getY() - 2, reservedPositions, p, pgs);
+    				}
+    				else
+    				{
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 2, myBase.getY() - 2, reservedPositions, p, pgs);
+    				}
+    			}
     			resourcesUsed += barracks.cost;
     		}
     	}
     	
     	// harvest with all the free workers:
-        for (Unit u : freeWorkers) {
+        for (Unit u : allWorkers) {
             Unit closestBase = null;
             Unit closestResource = null;
             int closestDistance = 0;
@@ -385,16 +468,26 @@ public class MyBot extends AbstractionLayerAI {
         // Command workers to attack if the enemy is close to them (Hopefully)
         for (Unit u : workers)
         {
+        	// Attack if enemy unit is close to a worker
         	Unit closestEnemy = GetClosestEnemy(pgs, p ,u);
         	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
-        	if (u.getHarvestAmount() == 0)
+        	if (distance < 5)
         	{
-        		if (distance < 5)
-        		{
-        			attack(u, closestEnemy);
-        		}
+        		attack(u, closestEnemy);
         	}
         }
+    }
+    
+    public int mapMultiplier(PhysicalGameState pgs)
+    {
+    	int multiplier = 0;
+    	
+    	for (int height=8; height<pgs.getHeight(); height+=8)
+    	{
+    		multiplier++;
+    	}
+    	
+    	return multiplier;
     }
     
     @Override
