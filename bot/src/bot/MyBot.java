@@ -384,7 +384,7 @@ public class MyBot extends AbstractionLayerAI {
     	barracksToBuild += multiplier;
     	if (nBarracks < barracksToBuild && !builders.isEmpty())
     	{
-    		if(p.getResources() >= barracks.cost)
+    		if(p.getResources() >= barracks.cost && myBase != null)
     		{
 				Unit u = builders.remove(0);
 			
