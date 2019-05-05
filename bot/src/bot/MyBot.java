@@ -168,7 +168,7 @@ public class MyBot extends AbstractionLayerAI {
     	// Train up to 3 workers
     	if(nWorkers < workerCount && p.getResources() >= worker.cost)
     	{
-    		if(nWorkers < 2 || nBarracks >= 1 || p.getResources() >= 5)
+    		if(nWorkers < 2 || nBarracks >= 1 || p.getResources() >= 5 || pgs.getHeight() <= 9)
     		{
     			train(u, worker);
     		}
@@ -256,33 +256,6 @@ public class MyBot extends AbstractionLayerAI {
     	if(closestEnemy != null)
     	{
     		attack(u, closestEnemy);
-    		// Light Unit attack behavior
-    		//if (u.getType() == light)
-    		//{
-    		//	if(closestEnemy.getType() != heavy)
-    		//	{
-    		//		attack(u, closestEnemy);
-    		//	}
-    		//	else
-    		//	{
-    		//		int distanceX = Math.abs(u.getX() - closestEnemy.getX());
-    		//		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
-    		//		move(u, distanceX, distanceY);
-    		//	}
-    		//}
-    		//else if (u.getType() == heavy)
-    		//{
-    		//	if(closestEnemy.getType() != archer)
-    		//	{
-    		//		attack(u, closestEnemy);
-    		//	}
-    		//	else
-    		//	{
-    		//		int distanceX = Math.abs(u.getX() - closestEnemy.getX());
-    		//		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
-    		//		move(u, distanceX, distanceY);
-    		//	}
-    		//}
     	}
     }
     
@@ -293,18 +266,7 @@ public class MyBot extends AbstractionLayerAI {
     	Unit closestEnemy = GetClosestEnemy(pgs, p, u);
     	if (closestEnemy != null)
     	{
-    		if(closestEnemy.getType() != light)
-    		{
-    			// Attack the closes unit if it's not a Heavy
-    			attack(u, closestEnemy);
-    		}
-    		else
-        	{
-        		// Hopefully move from Heavy units
-        		int distanceX = Math.abs(u.getX() - closestEnemy.getX());
-        		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
-        		move(u, distanceX, distanceY);
-        	}
+			attack(u, closestEnemy);
     	}
     }
     
@@ -324,7 +286,8 @@ public class MyBot extends AbstractionLayerAI {
     	int harvestersNeeded = 2;
     	
     	int multiplier = mapMultiplier(pgs);
-
+    	
+    	List<Unit> agressive = new LinkedList<Unit>();
     	List<Unit> builders = new LinkedList<Unit>();
     	List<Unit> harvesters = new LinkedList<Unit>();
     	List<Unit> attackers = new LinkedList<Unit>();
@@ -376,27 +339,33 @@ public class MyBot extends AbstractionLayerAI {
     	{
     		if(u2.getType().isResource)
     		{
-    			int distance = Math.abs(u2.getX() - myBase.getX()) + Math.abs(u2.getY() - myBase.getY());
-    			if(distance < 5)
+    			if (myBase != null)
     			{
-    				closeResources.add(u2);
+	    			int distance = Math.abs(u2.getX() - myBase.getX()) + Math.abs(u2.getY() - myBase.getY());
+	    			if(distance < 7)
+	    			{
+	    				closeResources.add(u2);
+	    				System.out.println(closeResources.size());
+	    			}
     			}
     		}
     	}
     	
     	for (Unit u2 : workers)
     	{
-	    	if (harvesters.size() < closeResources.size())
+	    	if (harvesters.size() < closeResources.size() && harvesters.size() < 2)
 	    	{
 	    		harvesters.add(u2);
 	    	}
 	    	else if (builders.size() < 1)
 	    	{
 	    		builders.add(u2);
+	    		agressive.add(u2);
 	    	}
 	    	else
 	    	{
 	    		attackers.add(u2);
+	    		agressive.add(u2);
 	    	}
     	}
     	
@@ -470,7 +439,6 @@ public class MyBot extends AbstractionLayerAI {
 	        for (Unit u : harvesters) 
 	        {
 	            Unit closestBase = null;
-	            List<Unit> allResources = new LinkedList<Unit>();
 	            Unit closestResource = null;
 	            int closestDistance = 0;
 	            
@@ -489,7 +457,7 @@ public class MyBot extends AbstractionLayerAI {
 		                    int d = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
 		                    if (closestResource == null || d < closestDistance) 
 		                    {
-		                       closestResource = closeResources.remove(closeResources.size() - 1);
+		                       closestResource = closeResources.get(closeResources.size() - 1);
 		                       closestDistance = d;
 		                    }
 		                }
@@ -543,16 +511,19 @@ public class MyBot extends AbstractionLayerAI {
     	}
         
         // Command workers to attack if the enemy is close to them (Hopefully)
-        for (Unit u : workers)
-        {
-        	// Attack if enemy unit is close to a worker
-        	Unit closestEnemy = GetClosestEnemy(pgs, p, u);
-        	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
-        	if (distance < 5)
-        	{
-        		attack(u, closestEnemy);
-        	}
-        }
+    	if (nBarracks > 0 && p.getResources() >= 2)
+    	{
+	        for (Unit u : workers)
+	        {
+	        	// Attack if enemy unit is close to a worker
+	        	Unit closestEnemy = GetClosestEnemy(pgs, p, u);
+	        	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
+	        	if (distance < 5)
+	        	{
+	        		attack(u, closestEnemy);
+	        	}
+	        }
+    	}
     }
     
     public boolean isPathClear(Unit myUnit, int targetPos, GameState gs) 
