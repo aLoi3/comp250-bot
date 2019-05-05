@@ -114,7 +114,7 @@ public class MyBot extends AbstractionLayerAI {
         		workers.add(unit);
         	}
         }
-        WorkerBehavior(workers, p, pgs);
+        WorkerBehavior(workers, p, gs);
         
         return translateActions(player, gs);
     }
@@ -194,6 +194,13 @@ public class MyBot extends AbstractionLayerAI {
     			train(u, troopToTrain);
     		}
     	}
+    	else
+    	{
+    		if(p.getResources() >= archer.cost)
+    		{
+    			train(u, archer);
+    		}
+    	}
     }
     
     public int EnemyUnitCount(Player p, PhysicalGameState pgs, UnitType enemy, UnitType ally)
@@ -248,33 +255,34 @@ public class MyBot extends AbstractionLayerAI {
     	Unit closestEnemy = GetClosestEnemy(pgs, p, u);
     	if(closestEnemy != null)
     	{
+    		attack(u, closestEnemy);
     		// Light Unit attack behavior
-    		if (u.getType() == light)
-    		{
-    			if(closestEnemy.getType() != heavy)
-    			{
-    				attack(u, closestEnemy);
-    			}
-    			else
-    			{
-    				int distanceX = Math.abs(u.getX() - closestEnemy.getX());
-            		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
-            		move(u, distanceX, distanceY);
-    			}
-    		}
-    		else if (u.getType() == heavy)
-    		{
-    			if(closestEnemy.getType() != archer)
-    			{
-    				attack(u, closestEnemy);
-    			}
-    			else
-    			{
-    				int distanceX = Math.abs(u.getX() - closestEnemy.getX());
-            		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
-            		move(u, distanceX, distanceY);
-    			}
-    		}
+    		//if (u.getType() == light)
+    		//{
+    		//	if(closestEnemy.getType() != heavy)
+    		//	{
+    		//		attack(u, closestEnemy);
+    		//	}
+    		//	else
+    		//	{
+    		//		int distanceX = Math.abs(u.getX() - closestEnemy.getX());
+    		//		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
+    		//		move(u, distanceX, distanceY);
+    		//	}
+    		//}
+    		//else if (u.getType() == heavy)
+    		//{
+    		//	if(closestEnemy.getType() != archer)
+    		//	{
+    		//		attack(u, closestEnemy);
+    		//	}
+    		//	else
+    		//	{
+    		//		int distanceX = Math.abs(u.getX() - closestEnemy.getX());
+    		//		int distanceY = Math.abs(u.getY() - closestEnemy.getY());
+    		//		move(u, distanceX, distanceY);
+    		//	}
+    		//}
     	}
     }
     
@@ -301,8 +309,10 @@ public class MyBot extends AbstractionLayerAI {
     }
     
     // Worker behavior ? 
-    public void WorkerBehavior(List<Unit> workers, Player p, PhysicalGameState pgs)
+    public void WorkerBehavior(List<Unit> workers, Player p, GameState gs)
     {
+    	PhysicalGameState pgs = gs.getPhysicalGameState();
+    	
     	int nBases = 0;
     	int nBarracks = 0;
     	Unit myBase = null;
@@ -318,26 +328,11 @@ public class MyBot extends AbstractionLayerAI {
     	List<Unit> builders = new LinkedList<Unit>();
     	List<Unit> harvesters = new LinkedList<Unit>();
     	List<Unit> attackers = new LinkedList<Unit>();
+    	List<Unit> closeResources = new LinkedList<Unit>();
     	
     	if (workers.isEmpty())
     	{
     		return;
-    	}
-    	
-    	for (Unit u2 : workers)
-    	{
-	    	if (harvesters.size() < harvestersNeeded)
-	    	{
-	    		harvesters.add(u2);
-	    	}
-	    	else if (builders.size() < 1)
-	    	{
-	    		builders.add(u2);
-	    	}
-	    	else
-	    	{
-	    		attackers.add(u2);
-	    	}
     	}
     	
     //	for (Unit u2 : pgs.getUnits())
@@ -349,6 +344,7 @@ public class MyBot extends AbstractionLayerAI {
     //	}
     //	resourceCount = Math.round(resourceCount / 2);
     	
+    	// Get number of my barracks and bases
     	for (Unit u2 : pgs.getUnits())
     	{    		
     		if(u2.getType() == base && u2.getPlayer() == p.getID())
@@ -363,6 +359,7 @@ public class MyBot extends AbstractionLayerAI {
     		}
     	}
     	
+    	// Check whether we are at the top or at the bottom
     	if(myBase != null)
     	{
 	    	if(myBase.getX() < pgs.getWidth() / 2)
@@ -372,6 +369,34 @@ public class MyBot extends AbstractionLayerAI {
 	    	else
 	    	{
 	    		isOnTop = false;
+	    	}
+    	}
+    	
+    	for(Unit u2 : pgs.getUnits())
+    	{
+    		if(u2.getType().isResource)
+    		{
+    			int distance = Math.abs(u2.getX() - myBase.getX()) + Math.abs(u2.getY() - myBase.getY());
+    			if(distance < 5)
+    			{
+    				closeResources.add(u2);
+    			}
+    		}
+    	}
+    	
+    	for (Unit u2 : workers)
+    	{
+	    	if (harvesters.size() < closeResources.size())
+	    	{
+	    		harvesters.add(u2);
+	    	}
+	    	else if (builders.size() < 1)
+	    	{
+	    		builders.add(u2);
+	    	}
+	    	else
+	    	{
+	    		attackers.add(u2);
 	    	}
     	}
     	
@@ -396,6 +421,8 @@ public class MyBot extends AbstractionLayerAI {
 			
     			if(isOnTop)
         		{
+    				//buildIfNotAlreadyBuilding(u, barracks, u.getX(), u.getY(), reservedPositions, p, pgs);
+    				// MAKE DYNAMIC OR CHANGE TO SIMPLER VERSION
     				if(nBarracks == 0)
     				{
     					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 2, myBase.getY() + 2, reservedPositions, p, pgs);
@@ -406,11 +433,12 @@ public class MyBot extends AbstractionLayerAI {
     				}
     				else
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, u.getX(), u.getY(), reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 3, myBase.getY() + 1, reservedPositions, p, pgs);
     				}
         		}
     			else
     			{
+    				//buildIfNotAlreadyBuilding(u, barracks, u.getX(), u.getY(), reservedPositions, p, pgs);
     				if(nBarracks == 0)
     				{
     					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 2, myBase.getY() - 2, reservedPositions, p, pgs);
@@ -421,7 +449,7 @@ public class MyBot extends AbstractionLayerAI {
     				}
     				else
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, u.getX(), u.getY(), reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 3, myBase.getY() - 1, reservedPositions, p, pgs);
     				}
     			}
     			//resourcesUsed += barracks.cost;
@@ -436,61 +464,82 @@ public class MyBot extends AbstractionLayerAI {
     		}
     	}
     	
+    	// harvest with all the free workers:
+    	if(!harvesters.isEmpty())
+    	{
+	        for (Unit u : harvesters) 
+	        {
+	            Unit closestBase = null;
+	            List<Unit> allResources = new LinkedList<Unit>();
+	            Unit closestResource = null;
+	            int closestDistance = 0;
+	            
+	            if(closeResources.isEmpty())
+	            {
+	            	attackers.addAll(harvesters);
+	            	harvesters.removeAll(harvesters);
+	            }
+	            else
+	            {
+		            for (Unit u2 : closeResources) 
+		            {
+		                if (u2.getType().isResource) 
+		                {
+		                	//allResources.add(u2);
+		                    int d = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
+		                    if (closestResource == null || d < closestDistance) 
+		                    {
+		                       closestResource = closeResources.remove(closeResources.size() - 1);
+		                       closestDistance = d;
+		                    }
+		                }
+		            }
+		            closestDistance = 0;
+		            for (Unit u2 : pgs.getUnits()) 
+		            {
+		                if (u2.getType().isStockpile && u2.getPlayer()==p.getID()) 
+		                {
+		                    int d = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
+		                    if (closestBase == null || d < closestDistance) 
+		                    {
+		                        closestBase = u2;
+		                        closestDistance = d;
+		                    }
+		                }
+		            }
+		            if (closestResource != null && closestBase != null) 
+		            {
+		                AbstractAction aa = getAbstractAction(u);
+		                if (aa instanceof Harvest) 
+		                {
+		                    Harvest h_aa = (Harvest)aa;
+		                    if (h_aa.getTarget() != closestResource || h_aa.getBase()!=closestBase) harvest(u, closestResource, closestBase);
+		                } 
+		                else 
+		                {
+		                    harvest(u, closestResource, closestBase);
+		                }
+		            }
+	            }
+	        }
+    	}
+    	
     	if(!attackers.isEmpty())
     	{
     		for (Unit u2 : attackers)
     		{
     			Unit closestEnemy = GetClosestEnemy(pgs, p, u2);
     			attack(u2, closestEnemy);
+    			//if(isPathClear(u2, closestEnemy.getPosition(pgs), gs))
+    			//{
+        		//	attack(u2, closestEnemy);
+    			//}
+    			//else
+    			//{
+    			//	harvesters.addAll(attackers);
+    			//	attackers.removeAll(attackers); // TEST IT
+    			//}
     		}
-    	}
-    	
-    	// harvest with all the free workers:
-    	if(!harvesters.isEmpty())
-    	{
-	        for (Unit u : harvesters) {
-	            Unit closestBase = null;
-	            Unit closestResource = null;
-	            int closestDistance = 0;
-	            for (Unit u2 : pgs.getUnits()) 
-	            {
-	                if (u2.getType().isResource) 
-	                {
-	                    int d = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
-	                    if (closestResource == null || d < closestDistance) 
-	                    {
-	                        closestResource = u2;
-	                        closestDistance = d;
-	                    }
-	                }
-	            }
-	            closestDistance = 0;
-	            for (Unit u2 : pgs.getUnits()) 
-	            {
-	                if (u2.getType().isStockpile && u2.getPlayer()==p.getID()) 
-	                {
-	                    int d = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
-	                    if (closestBase == null || d < closestDistance) 
-	                    {
-	                        closestBase = u2;
-	                        closestDistance = d;
-	                    }
-	                }
-	            }
-	            if (closestResource != null && closestBase != null) 
-	            {
-	                AbstractAction aa = getAbstractAction(u);
-	                if (aa instanceof Harvest) 
-	                {
-	                    Harvest h_aa = (Harvest)aa;
-	                    if (h_aa.getTarget() != closestResource || h_aa.getBase()!=closestBase) harvest(u, closestResource, closestBase);
-	                } 
-	                else 
-	                {
-	                    harvest(u, closestResource, closestBase);
-	                }
-	            }
-	        }
     	}
         
         // Command workers to attack if the enemy is close to them (Hopefully)
@@ -504,6 +553,19 @@ public class MyBot extends AbstractionLayerAI {
         		attack(u, closestEnemy);
         	}
         }
+    }
+    
+    public boolean isPathClear(Unit myUnit, int targetPos, GameState gs) 
+    {
+    	boolean checkPath = pf.pathExists(myUnit, targetPos, gs, null);
+    	if (checkPath)
+    	{
+    		return true;
+    	}
+    	else
+    	{
+    		return false;
+    	}
     }
     
     public int mapMultiplier(PhysicalGameState pgs)
