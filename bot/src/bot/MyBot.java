@@ -502,7 +502,7 @@ public class MyBot extends AbstractionLayerAI {
         		{
     				if(nBarracks == 0)
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 1, myBase.getY() + 3, reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 2, myBase.getY() + 2, reservedPositions, p, pgs);
     				}
     				if (nBarracks == 1)
     				{
@@ -517,15 +517,15 @@ public class MyBot extends AbstractionLayerAI {
     			{
     				if(nBarracks == 0)
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 2, myBase.getY() - 2, reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX(), myBase.getY(), reservedPositions, p, pgs);
     				}
     				if (nBarracks == 1)
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 1, myBase.getY() - 3, reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() + 1, myBase.getY() - 1, reservedPositions, p, pgs);
     				}
     				else
     				{
-    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 3, myBase.getY() - 1, reservedPositions, p, pgs);
+    					buildIfNotAlreadyBuilding(u, barracks, myBase.getX() - 1, myBase.getY() + 1, reservedPositions, p, pgs);
     				}
     			}
     		}
@@ -560,6 +560,7 @@ public class MyBot extends AbstractionLayerAI {
 	            {
 		            for (int i=0; i < closeResources.size(); i++) 
 		            {
+		            	// Get the closest resource to harvest from
 		                if (closeResources.get(i).getType().isResource) 
 		                {
 		                    int d = Math.abs(closeResources.get(i).getX() - u.getX()) + Math.abs(closeResources.get(i).getY() - u.getY());
@@ -570,6 +571,7 @@ public class MyBot extends AbstractionLayerAI {
 		                    }
 		                }
 		            }
+		            // Get the closest base to put resources in
 		            closestDistance = 0;
 		            for (Unit u2 : pgs.getUnits()) 
 		            {
@@ -583,6 +585,7 @@ public class MyBot extends AbstractionLayerAI {
 		                    }
 		                }
 		            }
+		            // Assign my harvesters to harvest materials
 		            if (closestResource != null && closestBase != null) 
 		            {
 		                AbstractAction aa = getAbstractAction(u);
@@ -684,15 +687,15 @@ public class MyBot extends AbstractionLayerAI {
     		{
     			if(units.get(i-1).getType() == archer)
     			{
-    				move(units.get(i-1), i - 1, pgs.getWidth() - 3);
+    				move(units.get(i-1), pgs.getWidth() - 4, i - 1);
     			}
     			else if (units.get(i-1).getType() == worker)
     			{
-    				move(units.get(i-1), i - 1, pgs.getWidth() - 1);
+    				move(units.get(i-1), pgs.getWidth() - 2, i - 1);
     			}
     			else if (units.get(i-1).getType() == light || units.get(i-1).getType() == heavy)
     			{
-    				move(units.get(i-1), i - 1, pgs.getWidth() - 2);
+    				move(units.get(i-1), pgs.getWidth() - 3, i - 1);
     			}
     		}
     	}
