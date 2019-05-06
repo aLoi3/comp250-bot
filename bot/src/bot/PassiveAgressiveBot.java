@@ -22,7 +22,7 @@ import rts.units.Unit;
 import rts.units.UnitType;
 import rts.units.UnitTypeTable;
 
-public class MyBot extends AbstractionLayerAI {    
+public class PassiveAgressiveBot extends AbstractionLayerAI {    
     private UnitTypeTable utt;
     private UnitType worker;
     private UnitType archer;
@@ -32,7 +32,7 @@ public class MyBot extends AbstractionLayerAI {
     private UnitType base;
     private boolean isOnTop;
     
-    public MyBot(UnitTypeTable utt) {
+    public PassiveAgressiveBot(UnitTypeTable utt) {
         super(new AStarPathFinding());
         this.utt = utt;
         worker = utt.getUnitType("Worker");
@@ -52,7 +52,7 @@ public class MyBot extends AbstractionLayerAI {
     
     @Override
     public AI clone() {
-        return new MyBot(utt);
+        return new PassiveAgressiveBot(utt);
     }
    
     
@@ -131,7 +131,7 @@ public class MyBot extends AbstractionLayerAI {
     	for(Unit u2:pgs.getUnits())
     	{
     		// Check if the unit is enemy's and not a resource
-    		if(u2.getPlayer() >= 0 && u2.getPlayer() != p.getID())
+    		if(u2.getPlayer() >= 0 && u2.getPlayer() != p.getID() && u2.getType() != base)
     		{
     			// Calculate it's distance to my unit
     			int distance = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
@@ -639,13 +639,17 @@ public class MyBot extends AbstractionLayerAI {
 	        	// Get the closest enemy
 	        	Unit closestEnemy = GetClosestEnemy(pgs, p, u);
 	        	boolean doesPathExists = DoesPathExists(closestEnemy, u, gs);
-	        	int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
-	        	// If true and the close enough - attack!
-	        	if(doesPathExists)
+	        	if (closestEnemy != null)
 	        	{
-		        	if (distance < 5)
+	        		int distance = Math.abs(closestEnemy.getX() - u.getX()) + Math.abs(closestEnemy.getY() - u.getY());
+	        	
+		        	// If true and the close enough - attack!
+		        	if(doesPathExists)
 		        	{
-		        		attack(u, closestEnemy);
+			        	if (distance < 5)
+			        	{
+			        		attack(u, closestEnemy);
+			        	}
 		        	}
 	        	}
 	        }
@@ -711,12 +715,15 @@ public class MyBot extends AbstractionLayerAI {
     public boolean DoesPathExists(Unit closestEnemy, Unit u, GameState gs)
     {
     	boolean doesPathExists = false;
-    	if(pf.pathExists(u, (closestEnemy.getY())*(closestEnemy.getX() + 1), gs, null) || 
-    			pf.pathExists(u, (closestEnemy.getY())*(closestEnemy.getX() - 1), gs, null) || 
-    			pf.pathExists(u, (closestEnemy.getY() + 1)*(closestEnemy.getX()), gs, null) || 
-    			pf.pathExists(u, (closestEnemy.getY() - 1)*(closestEnemy.getX()), gs, null))
+    	if (closestEnemy != null)
     	{
-    		doesPathExists = true;
+	    	if(pf.pathExists(u, (closestEnemy.getY())*(closestEnemy.getX() + 1), gs, null) || 
+	    			pf.pathExists(u, (closestEnemy.getY())*(closestEnemy.getX() - 1), gs, null) || 
+	    			pf.pathExists(u, (closestEnemy.getY() + 1)*(closestEnemy.getX()), gs, null) || 
+	    			pf.pathExists(u, (closestEnemy.getY() - 1)*(closestEnemy.getX()), gs, null))
+	    	{
+	    		doesPathExists = true;
+	    	}
     	}
     	return doesPathExists;
     }
