@@ -22,7 +22,7 @@ import rts.units.Unit;
 import rts.units.UnitType;
 import rts.units.UnitTypeTable;
 
-public class PassiveAgressiveBot extends AbstractionLayerAI {    
+public class AgileBot extends AbstractionLayerAI {    
     private UnitTypeTable utt;
     private UnitType worker;
     private UnitType archer;
@@ -32,7 +32,7 @@ public class PassiveAgressiveBot extends AbstractionLayerAI {
     private UnitType base;
     private boolean isOnTop;
     
-    public PassiveAgressiveBot(UnitTypeTable utt) {
+    public AgileBot(UnitTypeTable utt) {
         super(new AStarPathFinding());
         this.utt = utt;
         worker = utt.getUnitType("Worker");
@@ -52,7 +52,7 @@ public class PassiveAgressiveBot extends AbstractionLayerAI {
     
     @Override
     public AI clone() {
-        return new PassiveAgressiveBot(utt);
+        return new AgileBot(utt);
     }
    
     
@@ -131,7 +131,7 @@ public class PassiveAgressiveBot extends AbstractionLayerAI {
     	for(Unit u2:pgs.getUnits())
     	{
     		// Check if the unit is enemy's and not a resource
-    		if(u2.getPlayer() >= 0 && u2.getPlayer() != p.getID() && u2.getType() != base)
+    		if(u2.getPlayer() >= 0 && u2.getPlayer() != p.getID())
     		{
     			// Calculate it's distance to my unit
     			int distance = Math.abs(u2.getX() - u.getX()) + Math.abs(u2.getY() - u.getY());
@@ -183,7 +183,7 @@ public class PassiveAgressiveBot extends AbstractionLayerAI {
     	// Train my workers if possible
     	if(nWorkers < workerCount && p.getResources() >= worker.cost)
     	{
-    		if(nWorkers < 2 || nBarracks >= 1 || p.getResources() >= 5)
+    		if(nWorkers < 2 || nBarracks >= 1 || p.getResources() >= 5 || multiplier == 0)
     		{
     			train(u, worker);
     		}
@@ -468,7 +468,7 @@ public class PassiveAgressiveBot extends AbstractionLayerAI {
 	    	{
 	    		harvesters.add(u2);
 	    	}
-	    	else if (builders.size() < 1)
+	    	else if (builders.size() < 1 && multiplier != 0)
 	    	{
 	    		builders.add(u2);
 	    	}
